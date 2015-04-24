@@ -31,13 +31,12 @@ $(document).ready(function() {
 	});
 
 	function filter() {
-		var filter = $('#filter').val();
-		console.log(filter);
+		var filter = $('#filter').val().toLowerCase();
 		$('.dump').each(function() {
 			if (filter == "") {
 				$(this).removeClass('hide');
 			} else {
-				var text = $(this).text();
+				var text = $(this).text().toLowerCase();
 				if (text.indexOf(filter) > -1) {
 					$(this).removeClass('hide');
 				} else {
