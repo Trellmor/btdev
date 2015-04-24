@@ -1,0 +1,112 @@
+<!doctype html>
+<html>
+	<head>
+		<title>BerryTube dev server</title>
+		<script src="/socket.io/socket.io.js"></script>
+		<script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+		<script type="text/javascript">
+$(document).ready(function() {
+	var socket = io.connect();
+	var dumps = [];
+
+	socket.on('connect', function() {
+		socket.emit('getDumps');
+	});
+
+	socket.on('getDumps', function(data) {
+		$('#dumps').empty();
+
+		dumps = data;
+		for (var i = 0; i < data.length; i++) {
+			$('#dumps').append('<option class="dump" data-id="' + i + '">' + data[i].event + '</option>');
+		}
+
+		$('.dump').click(function(e) {
+			$('#dumpviewer').empty();
+			var dump = dumps[parseInt($(this).data('id'))];
+			$('#dumpviewer').text(JSON.stringify(dump.data, null, 2));
+		});
+
+		filter();
+	});
+
+	function filter() {
+		var filter = $('#filter').val();
+		console.log(filter);
+		$('.dump').each(function() {
+			if (filter == "") {
+				$(this).removeClass('hide');
+			} else {
+				var text = $(this).text();
+				if (text.indexOf(filter) > -1) {
+					$(this).removeClass('hide');
+				} else {
+					$(this).addClass('hide');
+				}
+			}
+		});
+	}
+
+	var filterTimeout;
+	$('#filter').bind('input', function() {
+		clearTimeout(filterTimeout);
+		filterTimeout = setTimeout(filter, 500);
+	});
+
+	$('#send').click(function(e) {
+		$('.dump:selected').each(function() {
+			var dump = dumps[parseInt($(this).data('id'))];
+			socket.emit('sendRaw', dump);
+		});
+	});
+});
+		</script>
+		<style type="text/css">
+#dumps {
+	height: 500px;
+	width: 300px;
+}
+
+#filter {
+	width: 300px;
+}
+
+.hide {
+	display: none;
+}
+
+#container {
+	display: table;
+}
+
+.cell {
+	display: table-cell;
+	padding: 10px;
+}
+
+#dumpviewer {
+	background-color: #d3d3d3;
+	border: 1px solid black;
+	white-space: pre-wrap;
+}
+		</style>
+	</head>
+	<body>
+		<div id="container">
+			<div class="cell">
+				<p>
+					<input id="filter" name="filter" />
+				</p>
+				<p>
+					<select id="dumps" multiple></select>
+				</p>
+				<p>
+					<button id="send" type="button">Send</button>
+				</p>
+			</div>
+			<div class="cell">
+				<pre id="dumpviewer"></pre>
+			</div>
+		</div>
+	</body>
+</html>

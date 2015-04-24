@@ -1,0 +1,11 @@
+{
+  "name": "btdev",
+  "description": "BerryTube dev server",
+  "author": "Daniel Triendl <daniel@pew.cc>",
+  "dependencies": {
+    "jsonfile": "2.0.x",
+    "socket.io": "0.9.x",
+	"serve-static": "1.9.x",
+	"finalhandler": "0.3.x"
+  }
+}

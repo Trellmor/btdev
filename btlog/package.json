@@ -1,0 +1,9 @@
+{
+  "name": "btlog",
+  "description": "BerryTube Message logger",
+  "author": "Daniel Triendl <daniel@pew.cc>",
+  "dependencies": {
+    "jsonfile": "^2.0.0",
+    "socket.io-client": "0.9.x"
+  }
+}
