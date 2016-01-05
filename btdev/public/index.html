@@ -14,21 +14,25 @@ $(document).ready(function() {
 	});
 
 	socket.on('getDumps', function(data) {
+		dumps = data;
+		createDumps();
+	});
+
+	function createDumps() {
 		$('#dumps').empty();
 
-		dumps = data;
-		for (var i = 0; i < data.length; i++) {
-			$('#dumps').append('<option class="dump" data-id="' + i + '">' + data[i].event + '</option>');
+		for (var i = 0; i < dumps.length; i++) {
+			if (dumps[i]) {
+				createDump(i);
+			}
 		}
 
-		$('.dump').click(function(e) {
-			$('#dumpviewer').empty();
-			var dump = dumps[parseInt($(this).data('id'))];
-			$('#dumpviewer').text(JSON.stringify(dump.data, null, 2));
-		});
-
 		filter();
-	});
+	}
+
+	function createDump(index) {
+		$('#dumps').append('<option class="dump" data-id="' + index + '">' + dumps[index].event + '</option>');
+	}
 
 	function filter() {
 		var filter = $('#filter').val().toLowerCase();
@@ -46,6 +50,13 @@ $(document).ready(function() {
 		});
 	}
 
+	$('#dumps').on('click', 'option', function() {
+		$('#dumpviewer').empty();
+		var dump = dumps[parseInt($(this).data('id'))];
+		$('#dumpviewer').val(JSON.stringify(dump.data, null, 2));
+		$('#dumpnumber').val($(this).data('id'));
+	});
+
 	var filterTimeout;
 	$('#filter').bind('input', function() {
 		clearTimeout(filterTimeout);
@@ -57,6 +68,39 @@ $(document).ready(function() {
 			var dump = dumps[parseInt($(this).data('id'))];
 			socket.emit('sendRaw', dump);
 		});
+	});
+
+	$('#save').click(function(e) {
+		var index = parseInt($('#dumpnumber').val());
+		var dump = dumps[index];
+		try {
+			dump.data = JSON.parse($('#dumpviewer').val());
+			dumps[index] = dump;
+			console.log(dump.data);
+			socket.emit('saveDump', { id: index, dump: dump });
+		} catch (err) {
+			alert(err);
+		}
+	});
+
+	$('#new').click(function(e) {
+		var event = prompt('Event');
+		if (event != '') {
+			var index = dumps.length;
+			var dump = {
+				event: event,
+				data: {}
+			}
+			dumps[index] = dump;
+			createDump(index);
+		}
+	});
+
+	$('#delete').click(function(e) {
+		var index = parseInt($('#dumpnumber').val());
+		dumps.splice(index, 1);
+		socket.emit('deleteDump', index);
+		createDumps();
 	});
 });
 		</script>
@@ -86,7 +130,8 @@ $(document).ready(function() {
 #dumpviewer {
 	background-color: #d3d3d3;
 	border: 1px solid black;
-	white-space: pre-wrap;
+	width: 600px;
+	height: 500px;
 }
 		</style>
 	</head>
@@ -104,7 +149,17 @@ $(document).ready(function() {
 				</p>
 			</div>
 			<div class="cell">
-				<pre id="dumpviewer"></pre>
+				<p>
+					<input id="dumpnumber" type="text" readonly />
+				</p>
+				<p>
+					<textarea id="dumpviewer" name="dumpviewer"></textarea>
+				</p>
+				<p>
+					<button id="save" type="button">Save</button>
+					<button id="new" type="button">New</button>
+					<button id="delete" type="button">Delete</button>
+				</p>
 			</div>
 		</div>
 	</body>

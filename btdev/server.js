@@ -5,6 +5,13 @@ var io = require('socket.io');
 var fs = require('fs');
 var jf = require('jsonfile');
 
+function pad(num, size) {
+	var s = num+"";
+	while (s.length < size) s = "0" + s;
+	return s;
+}
+
+
 function BTDev(port) {
 	this.dumps = [];
 	this.loadDumps();
@@ -27,6 +34,9 @@ BTDev.prototype.loadDumps = function() {
 		if (err) throw err;
 
 		files.forEach(function(file) {
+			if (file.indexOf('.json') == -1) {
+				return;
+			}
 			var index = parseInt(file.split('.')[0]);
 
 			self.dumps[index] = jf.readFileSync('logs/' + file);
@@ -51,6 +61,20 @@ BTDev.prototype.initIO = function() {
 		socket.on('setNick', function(data) {
 			socket.emit('setNick', data.nick);
 		});	
+
+		socket.on('saveDump', function(data) {
+			self.dumps[data.id] = data.dump;
+			jf.writeFile('logs/' + pad(data.id, 7) + '.json', data.dump, function(err) {
+				if (err) console.log(err);
+			});
+		});
+
+		socket.on('deleteDump', function(data) {
+			self.dumps.splice(data, 1);
+			fs.unlink('logs/' + pad(data, 7) + '.json', function(err) {
+				if (err) console.log(err);
+			});
+		});
 	});
 }
 
